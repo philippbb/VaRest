@@ -16,6 +16,8 @@ UVaRestRequestJSON::UVaRestRequestJSON(const class FObjectInitializer& PCIP)
   : Super(PCIP),
     BinaryContentType(TEXT("application/octet-stream"))
 {
+	ContinueAction = nullptr;
+
 	RequestVerb = ERequestVerb::GET;
 	RequestContentType = ERequestContentType::x_www_form_urlencoded_url;
 
@@ -96,7 +98,8 @@ void UVaRestRequestJSON::ResetRequestData()
 		RequestJsonObj = NewObject<UVaRestJsonObject>();
 	}
 
-	HttpRequest = FHttpModule::Get().CreateRequest();
+	// See issue #90
+	// HttpRequest = FHttpModule::Get().CreateRequest();
 
 	RequestBytes.Empty();
 	StringRequestContent.Empty();
@@ -196,15 +199,19 @@ TArray<FString> UVaRestRequestJSON::GetAllResponseHeaders()
 //////////////////////////////////////////////////////////////////////////
 // URL processing
 
-void UVaRestRequestJSON::ProcessURL(const FString& Url)
+void UVaRestRequestJSON::SetURL(const FString& Url)
 {
 	// Be sure to trim URL because it can break links on iOS
 	FString TrimmedUrl = Url;
 	TrimmedUrl.Trim();
 	TrimmedUrl.TrimTrailing();
-
+	
 	HttpRequest->SetURL(TrimmedUrl);
+}
 
+void UVaRestRequestJSON::ProcessURL(const FString& Url)
+{
+	SetURL(Url);
 	ProcessRequest();
 }
 
@@ -230,6 +237,17 @@ void UVaRestRequestJSON::ApplyURL(const FString& Url, UVaRestJsonObject *&Result
 		}
 
 		LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID, ContinueAction = new FVaRestLatentAction<UVaRestJsonObject*>(this, Result, LatentInfo));
+	}
+
+	ProcessRequest();
+}
+
+void UVaRestRequestJSON::ExecuteProcessRequest()
+{
+	if (HttpRequest->GetURL().Len() == 0)
+	{
+		UE_LOG(LogVaRest, Error, TEXT("Request execution attempt with empty URL"));
+		return;
 	}
 
 	ProcessRequest();

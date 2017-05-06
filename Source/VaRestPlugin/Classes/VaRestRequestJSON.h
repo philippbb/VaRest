@@ -2,10 +2,8 @@
 
 #pragma once
 
-#include "Delegate.h"
+#include "Engine/LatentActionManager.h"
 #include "Http.h"
-#include "Map.h"
-#include "Json.h"
 
 #include "VaRestTypes.h"
 #include "VaRestRequestJSON.generated.h"
@@ -192,6 +190,10 @@ public:
 	// URL processing
 
 public:
+	/** Setting request URL */
+	UFUNCTION(BlueprintCallable, Category = "VaRest|Request")
+	void SetURL(const FString& Url = TEXT("http://alyamkin.com"));
+
 	/** Open URL with current setup */
 	UFUNCTION(BlueprintCallable, Category = "VaRest|Request")
 	virtual void ProcessURL(const FString& Url = TEXT("http://alyamkin.com"));
@@ -200,10 +202,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VaRest|Request", meta = (Latent, LatentInfo = "LatentInfo", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject"))
 	virtual void ApplyURL(const FString& Url, UVaRestJsonObject *&Result, UObject* WorldContextObject, struct FLatentActionInfo LatentInfo);
 
+	/** Check URL and execute process request */
+	UFUNCTION(BlueprintCallable, Category = "VaRest|Request")
+	virtual void ExecuteProcessRequest();
+
 protected:
 	/** Apply current internal setup to request and process it */
 	void ProcessRequest();
-
 
 	//////////////////////////////////////////////////////////////////////////
 	// Request callbacks
